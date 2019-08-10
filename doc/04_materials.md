@@ -38,6 +38,7 @@ Rather than writing your own shader from scratch, especially with triplanar mapp
 
 If you want to start without a texture and just want to use a color, try turning down roughness, or adding some metalic to give the surface some reflectivity. This will allow light to reflect off the curves of the terrain in the distance. Otherwise you'll just see an undifferentiated mass of color.
 
+Also in order to enable ambient occlusion, you need to enable `vertex_color_use_as_albedo` material property.
 
 ### How To View Live Changes To Materials
 You can't see the terrain in the viewport, so there are two options to view your material live while making changes:
