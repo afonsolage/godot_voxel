@@ -262,12 +262,21 @@ void VoxelMesherBlocky::build(VoxelMesher::Output &output, const VoxelBuffer &bu
 									}
 								}
 
+								if (use_light_buffer) {
+									
+								}
+
 								if (_bake_occlusion) {
 									// Use color array
 
-									int append_index = arrays.colors.size();
-									arrays.colors.resize(arrays.colors.size() + vertex_count);
-									Color *w = arrays.colors.data() + append_index;
+									Color *ptr;
+									if (!use_light_buffer) {
+										int append_index = arrays.colors.size();
+										arrays.colors.resize(arrays.colors.size() + vertex_count);
+										ptr = arrays.colors.data() + append_index;
+									} else {
+										ptr = arrays.colors.data() + (arrays.colors.size() - vertex_count);
+									}
 
 									for (unsigned int i = 0; i < vertex_count; ++i) {
 										Vector3 v = rv[i];
@@ -288,8 +297,12 @@ void VoxelMesherBlocky::build(VoxelMesher::Output &output, const VoxelBuffer &bu
 													shade = s;
 											}
 										}
-										float gs = 1.0 - shade;
-										w[i] = Color(gs, gs, gs);
+										if (!use_light_buffer) {
+											float gs = (1.0 - shade);
+											ptr[i] = Color(gs, gs, gs);
+										} else {
+											ptr[i] *= shade;
+										}
 									}
 								}
 
