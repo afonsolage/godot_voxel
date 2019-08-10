@@ -1,6 +1,7 @@
 *.obj
 *.pyc
 *.o
+*.os
 
 .vscode/*
 !.vscode/settings.json

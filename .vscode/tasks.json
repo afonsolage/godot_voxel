@@ -1,0 +1,14 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run godot",
+            "type": "shell",
+            "command": "cd ../../ && scons -j8 platform=x11 voxel_shared=yes && bin/godot.x11.tools.64 --path ~/projects/godot/another_project/ Spatial.tscn",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
