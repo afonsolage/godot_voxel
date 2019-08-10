@@ -64,6 +64,7 @@ void VoxelMesherBlocky::build(VoxelMesher::Output &output, const VoxelBuffer &bu
 	ERR_FAIL_COND(padding < MINIMUM_PADDING);
 
 	const int channel = VoxelBuffer::CHANNEL_TYPE;
+	const int light_channel = VoxelBuffer::CHANNEL_DATA2;
 
 	const VoxelLibrary &library = **_library;
 
@@ -117,6 +118,14 @@ void VoxelMesherBlocky::build(VoxelMesher::Output &output, const VoxelBuffer &bu
 		// TODO This is an invalid behavior IF sending a full block of uniformly opaque cubes,
 		// however not likely for terrains because with neighbor padding, such a case means no face would be generated anyways
 		return;
+	}
+
+	uint8_t *light_buffer = buffer.get_channel_raw(light_channel);
+	bool use_light_buffer = light_buffer != nullptr;
+
+	if (use_light_buffer) {
+		//Light buffer should have the same size as type buffer.
+		CRASH_COND(memarr_len(light_buffer) != memarr_len(type_buffer));
 	}
 
 	//CRASH_COND(memarr_len(type_buffer) != buffer.get_volume() * sizeof(uint8_t));
