@@ -263,7 +263,14 @@ void VoxelMesherBlocky::build(VoxelMesher::Output &output, const VoxelBuffer &bu
 								}
 
 								if (use_light_buffer) {
-									
+									int append_index = arrays.colors.size();
+									arrays.colors.resize(arrays.colors.size() + vertex_count);
+									Color *ptr = arrays.colors.data() + append_index;
+
+									for (unsigned int i = 0; i < vertex_count; ++i) {
+										int light_value = light_buffer[voxel_index];
+										ptr[i] = Color(light_value/15.f, light_value/15.f, light_value/15.f);
+									}
 								}
 
 								if (_bake_occlusion) {

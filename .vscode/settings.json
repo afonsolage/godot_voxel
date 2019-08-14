@@ -1,0 +1,13 @@
+{
+    "files.exclude": {
+        "**/*.obj": true,
+        "**/*.pyc": true,
+        "**/*.o": true,
+        "**/*.os": true,
+        ".vscode/*": true,
+        ".vscode/settings.json": false,
+        ".vscode/tasks.json": false,
+        ".vscode/launch.json": false,
+        ".vscode/extensions.json": false
+    }
+}
