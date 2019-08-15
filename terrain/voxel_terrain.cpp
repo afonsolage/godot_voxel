@@ -1,9 +1,9 @@
 #include "voxel_terrain.h"
-#include "../light/voxel_light_spreader.h"
 #include "../streams/voxel_stream_test.h"
 #include "../util/profiling_clock.h"
 #include "../util/utility.h"
 #include "../util/voxel_raycast.h"
+#include "../light/voxel_light_spreader.h"
 #include "voxel_block.h"
 #include "voxel_map.h"
 
@@ -21,6 +21,7 @@ VoxelTerrain::VoxelTerrain() {
 
 	_stream_thread = NULL;
 	_block_updater = NULL;
+	_light_spreader = NULL;
 
 	_generate_collisions = false;
 	_run_in_editor = false;
@@ -279,6 +280,15 @@ void VoxelTerrain::reset_updater() {
 	params.library = _library;
 
 	_block_updater = memnew(VoxelMeshUpdater(1, params));
+	
+	if (_lighting_enabled) {
+		if (_light_spreader) {
+			memdelete(_light_spreader);
+			_light_spreader = NULL;
+		}
+		_light_spreader = memnew(VoxelLightSpreader(1, _map->get_block_size_pow2()));
+	}
+
 
 	// TODO Revert any pending update states!
 }
@@ -743,18 +753,20 @@ void VoxelTerrain::_process() {
 			}
 
 			*block_state = BLOCK_LIGHT_SENT;
-			
+
 			VoxelLightSpreader::InputBlock input_block;
 			input_block.data.voxels = _map->get_block(block_pos);
 			input_block.data.spread_data.append_array(_pending_light_data[block_pos]);
 		}
 		
+		_light_spreader->push(input);
 		_pending_light_data.clear();
 	}
 	_stats.time_send_light_requests = profiling_clock.restart();
 
 	// Get light spread responses
 	if (_lighting_enabled) {
+
 	}
 	_stats.time_process_light_responses = profiling_clock.restart();
 

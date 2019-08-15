@@ -16,7 +16,7 @@ public:
 
 	struct OutputBlockData {
 		Ref<VoxelBuffer> voxels;
-		Vector<HashMap<Vector3i, VoxelLightData>> affected_blocks; //Block neighbors that were affect by this light spreader and which need to be updated
+		Vector<HashMap<Vector3i, VoxelLightData> > affected_blocks; //Block neighbors that were affect by this light spreader and which need to be updated
 	};
 
 	struct Processor {
@@ -41,14 +41,15 @@ public:
 		void add_natural_light(VoxelBuffer &buffer);
 		void remove_natural_light(VoxelBuffer &buffer);
 
-		inline std::queue<BFSNode> &get_queue(const int light_type, const bool id_add) {
+		inline std::queue<BFSNode> &get_queue(const int light_type, const bool is_add) {
 			if (light_type == VoxelLightType::ARTIFICIAL)
-				return (id_add) ? art_add_queue : art_remove_queue;
+				return (is_add) ? art_add_queue : art_remove_queue;
 			else
-				(id_add) ? nat_add_queue : nat_remove_queue;
+				return (is_add) ? nat_add_queue : nat_remove_queue;
 		}
 	};
 
+public:
 	typedef VoxelBlockThreadManager<InputBlockData, OutputBlockData, Processor> Mgr;
 	typedef Mgr::InputBlock InputBlock;
 	typedef Mgr::OutputBlock OutputBlock;

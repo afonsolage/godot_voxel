@@ -7,12 +7,14 @@
 #include "../util/zprofiling.h"
 #include "voxel_data_loader.h"
 #include "voxel_mesh_updater.h"
+
 #include "../light/voxel_light.h"
 
 #include <scene/3d/spatial.h>
 
 class VoxelMap;
 class VoxelLibrary;
+class VoxelLightSpreader;
 
 // Infinite paged terrain made of voxel blocks all with the same level of detail.
 // Voxels are polygonized around the viewer by distance in a large cubic space.
@@ -139,7 +141,7 @@ private:
 	// Therefore, could a simple grid be better to use than a hashmap?
 
 
-	HashMap<Vector3i, Vector<VoxelLightData>> _pending_light_data;
+	HashMap<Vector3i, Vector<VoxelLightData>, Vector3iHasher> _pending_light_data;
 
 	Vector<Vector3i> _blocks_pending_load;
 	Vector<Vector3i> _blocks_pending_update;
@@ -151,6 +153,8 @@ private:
 
 	Ref<VoxelLibrary> _library;
 	VoxelMeshUpdater *_block_updater;
+
+	VoxelLightSpreader *_light_spreader;
 
 	NodePath _viewer_path;
 	Vector3i _last_viewer_block_pos;
