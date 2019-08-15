@@ -34,22 +34,23 @@ void VoxelLightSpreader::Processor::process_block(const InputBlockData &input, O
 	std::queue<BFSNode> art_remove_queue;
 	std::queue<BFSNode> art_add_queue;
 
-	for (std::vector<VoxelLightData>::const_iterator it = input.spread_data.begin(); it != input.spread_data.end(); it++) {
-		bool is_add_light = it->new_value > 0;
+	for (int i = 0; i < input.spread_data.size(); i++) {
+		const VoxelLightData &data = input.spread_data[i];
+		bool is_add_light = data.new_value > 0;
 
 		//There are four possible queues: add and remove natural and artifical light
-		std::queue<BFSNode> queue = get_queue(it->type, is_add_light);
+		std::queue<BFSNode> queue = get_queue(data.type, is_add_light);
 
-		int voxel_light_value = input_buffer.get_voxel(it->voxel, light_channel);
-		int light_value = (it->type == VoxelLightType::ARTIFICIAL) ? get_art_light(voxel_light_value) : get_nat_light(voxel_light_value);
+		int voxel_light_value = input_buffer.get_voxel(data.voxel, light_channel);
+		int light_value = (data.type == VoxelLightType::ARTIFICIAL) ? get_art_light(voxel_light_value) : get_nat_light(voxel_light_value);
 
-		if (is_add_light && it->new_value > light_value) {
+		if (is_add_light && data.new_value > light_value) {
 			//This is a light addition and new value is greater than current one
-			queue.emplace(BFSNode{ it->voxel, it->new_value });
-		} else if (it->new_value < light_value) {
+			queue.emplace(BFSNode{ data.voxel, data.new_value });
+		} else if (data.new_value < light_value) {
 			//We don't need to store the new_vale of a light removal, because it's always 0.
 			//Instead, we need to store the old value, because we'll need it. Trust me.
-			queue.emplace(BFSNode{ it->voxel, light_value });
+			queue.emplace(BFSNode{ data.voxel, light_value });
 		}
 	}
 
@@ -89,6 +90,7 @@ void VoxelLightSpreader::Processor::add_artificial_light(VoxelBuffer &buffer) {
 
 					//Can't spread to same voxel or to invalid voxel
 					if (npos.x < 0 || npos.x >= max || npos.y < 0 || npos.y >= max || npos.z < 0 || npos.z >= max || npos == node.position) {
+						//TODO: Spread to neighbors
 						continue;
 					}
 
@@ -122,6 +124,7 @@ void VoxelLightSpreader::Processor::remove_artificial_light(VoxelBuffer &buffer)
 					Vector3i npos = node.position + ndir;
 
 					if (npos.x < 0 || npos.x >= max || npos.y < 0 || npos.y >= max || npos.z < 0 || npos.z >= max || npos == node.position) {
+						//TODO: Spread to neighbors
 						continue;
 					}
 

@@ -11,12 +11,12 @@ class VoxelLightSpreader {
 public:
 	struct InputBlockData {
 		Ref<VoxelBuffer> voxels;
-		std::vector<VoxelLightData> spread_data;
+		Vector<VoxelLightData> spread_data;
 	};
 
 	struct OutputBlockData {
 		Ref<VoxelBuffer> voxels;
-		std::vector<Vector3i> affected_blocks;
+		Vector<HashMap<Vector3i, VoxelLightData>> affected_blocks; //Block neighbors that were affect by this light spreader and which need to be updated
 	};
 
 	struct Processor {

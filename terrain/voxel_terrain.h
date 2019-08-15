@@ -7,6 +7,7 @@
 #include "../util/zprofiling.h"
 #include "voxel_data_loader.h"
 #include "voxel_mesh_updater.h"
+#include "../light/voxel_light.h"
 
 #include <scene/3d/spatial.h>
 
@@ -23,6 +24,8 @@ public:
 	enum BlockDirtyState {
 		BLOCK_NONE, // There is no block
 		BLOCK_LOAD, // The block is loading
+		BLOCK_LIGHT_NOT_SENT, // The block needs to spread light addition or removal but wasn't sent yet
+		BLOCK_LIGHT_SENT, // the block needs to spread light addition or removal which was sent
 		BLOCK_UPDATE_NOT_SENT, // The block needs an update but wasn't sent yet
 		BLOCK_UPDATE_SENT, // The block needs an update which was sent
 		BLOCK_IDLE // The block is up to date
@@ -36,6 +39,8 @@ public:
 
 	void set_voxel_library(Ref<VoxelLibrary> library);
 	Ref<VoxelLibrary> get_voxel_library() const;
+
+	void set_voxel_light(VoxelLightType type, Vector3i pos, int new_value);
 
 	void make_block_dirty(Vector3i bpos);
 	//void make_blocks_dirty(Vector3i min, Vector3i size);
@@ -71,6 +76,8 @@ public:
 		uint64_t time_detect_required_blocks;
 		uint64_t time_send_load_requests;
 		uint64_t time_process_load_responses;
+		uint64_t time_send_light_requests;
+		uint64_t time_process_light_responses;
 		uint64_t time_send_update_requests;
 		uint64_t time_process_update_responses;
 
@@ -126,8 +133,13 @@ private:
 	// How many blocks to load around the viewer
 	int _view_distance_blocks;
 
+	bool _lighting_enabled;
+
 	// TODO Terrains only need to handle the visible portion of voxels, which reduces the bounds blocks to handle.
 	// Therefore, could a simple grid be better to use than a hashmap?
+
+
+	HashMap<Vector3i, Vector<VoxelLightData>> _pending_light_data;
 
 	Vector<Vector3i> _blocks_pending_load;
 	Vector<Vector3i> _blocks_pending_update;

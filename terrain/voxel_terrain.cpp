@@ -1,8 +1,9 @@
 #include "voxel_terrain.h"
+#include "../light/voxel_light_spreader.h"
 #include "../streams/voxel_stream_test.h"
+#include "../util/profiling_clock.h"
 #include "../util/utility.h"
 #include "../util/voxel_raycast.h"
-#include "../util/profiling_clock.h"
 #include "voxel_block.h"
 #include "voxel_map.h"
 
@@ -16,6 +17,7 @@ VoxelTerrain::VoxelTerrain() {
 
 	_view_distance_blocks = 8;
 	_last_view_distance_blocks = 0;
+	_lighting_enabled = false;
 
 	_stream_thread = NULL;
 	_block_updater = NULL;
@@ -283,6 +285,21 @@ void VoxelTerrain::reset_updater() {
 
 inline int get_border_index(int x, int max) {
 	return x == 0 ? 0 : x != max ? 1 : 2;
+}
+
+
+
+void VoxelTerrain::set_voxel_light(VoxelLightType type, Vector3i pos, int new_value) {
+	Vector3i block_pos = _map->voxel_to_block(pos);
+
+	if (_pending_light_data.has(block_pos)) {
+		Vector<VoxelLightData> &light_data_list = _pending_light_data.get(block_pos);
+		light_data_list.push_back(VoxelLightData{ type, (uint8_t)new_value, pos });
+	} else {
+		Vector<VoxelLightData> light_data_list;
+		light_data_list.push_back(VoxelLightData{ type, (uint8_t)new_value, pos });
+		_pending_light_data[block_pos] = light_data_list;
+	}
 }
 
 void VoxelTerrain::make_voxel_dirty(Vector3i pos) {
@@ -595,7 +612,7 @@ void VoxelTerrain::_process() {
 		remove_positions_outside_box(_blocks_pending_update, new_box, _dirty_blocks);
 	}
 
-	_stats.time_detect_required_blocks = profiling_clock.restart(); 
+	_stats.time_detect_required_blocks = profiling_clock.restart();
 
 	_last_view_distance_blocks = _view_distance_blocks;
 	_last_viewer_block_pos = viewer_block_pos;
@@ -666,7 +683,7 @@ void VoxelTerrain::_process() {
 			// TODO Discard blocks out of range
 
 			// Store buffer
-			bool update_neighbors = !_map->has_block(block_pos);
+			bool update_neighbors = !_map->has_block(block_pos); //check if is a new block
 			_map->set_block_buffer(block_pos, ob.data.voxels_loaded);
 
 			// Trigger mesh updates
@@ -702,8 +719,44 @@ void VoxelTerrain::_process() {
 			}
 		}
 	}
-
 	_stats.time_process_load_responses = profiling_clock.restart();
+
+	// Send light spread
+	if (_lighting_enabled) {
+		VoxelLightSpreader::Input input;
+		input.priority_position = viewer_block_pos;
+		input.priority_direction = viewer_direction;
+
+		List<Vector3i> block_list;
+		_pending_light_data.get_key_list(&block_list);
+
+		for (int i = 0; i < block_list.size(); ++i) {
+			Vector3i &block_pos = block_list[i];
+
+			VoxelTerrain::BlockDirtyState *block_state = _dirty_blocks.getptr(block_pos);
+
+			CRASH_COND(block_state == NULL);
+			
+			// Since we gonna change it, let's remove from pending queue
+			if (*block_state == BLOCK_UPDATE_NOT_SENT) {
+				_blocks_pending_update.erase(block_pos);
+			}
+
+			*block_state = BLOCK_LIGHT_SENT;
+			
+			VoxelLightSpreader::InputBlock input_block;
+			input_block.data.voxels = _map->get_block(block_pos);
+			input_block.data.spread_data.append_array(_pending_light_data[block_pos]);
+		}
+		
+		_pending_light_data.clear();
+	}
+	_stats.time_send_light_requests = profiling_clock.restart();
+
+	// Get light spread responses
+	if (_lighting_enabled) {
+	}
+	_stats.time_process_light_responses = profiling_clock.restart();
 
 	// Send mesh updates
 	{
