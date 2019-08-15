@@ -3,7 +3,7 @@
 #include <core/math/math_funcs.h>
 #include <string.h>
 
-const char *VoxelBuffer::CHANNEL_ID_HINT_STRING = "Type,Sdf,Data2,Data3,Data4,Data5,Data6,Data7";
+const char *VoxelBuffer::CHANNEL_ID_HINT_STRING = "Type,Sdf,Light,Data3,Data4,Data5,Data6,Data7";
 
 VoxelBuffer::VoxelBuffer() {
 	_channels[CHANNEL_ISOLEVEL].defval = 255;
@@ -310,7 +310,7 @@ void VoxelBuffer::_bind_methods() {
 
 	BIND_ENUM_CONSTANT(CHANNEL_TYPE);
 	BIND_ENUM_CONSTANT(CHANNEL_ISOLEVEL);
-	BIND_ENUM_CONSTANT(CHANNEL_DATA2);
+	BIND_ENUM_CONSTANT(CHANNEL_LIGHT);
 	BIND_ENUM_CONSTANT(CHANNEL_DATA3);
 	BIND_ENUM_CONSTANT(CHANNEL_DATA4);
 	BIND_ENUM_CONSTANT(CHANNEL_DATA5);

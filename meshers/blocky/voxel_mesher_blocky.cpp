@@ -64,7 +64,7 @@ void VoxelMesherBlocky::build(VoxelMesher::Output &output, const VoxelBuffer &bu
 	ERR_FAIL_COND(padding < MINIMUM_PADDING);
 
 	const int channel = VoxelBuffer::CHANNEL_TYPE;
-	const int light_channel = VoxelBuffer::CHANNEL_DATA2;
+	const int light_channel = VoxelBuffer::CHANNEL_LIGHT;
 
 	const VoxelLibrary &library = **_library;
 
