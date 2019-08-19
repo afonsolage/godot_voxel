@@ -1,9 +1,9 @@
 #ifndef VOXEL_LIGHT_SPREADER_H
 #define VOXEL_LIGHT_SPREADER_H
 
-#include "../terrain/block_thread_manager.h"
 #include "queue"
 #include "voxel_light.h"
+#include "../terrain/block_thread_manager.h"
 
 class VoxelBuffer;
 

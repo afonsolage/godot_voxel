@@ -8,6 +8,8 @@
 
 #define LIGHT_DECREASE_POWER 1
 
+#include "../util/utility.h"
+
 enum VoxelLightType {
 	NATURAL, //SUN, MOON, ETC
 	ARTIFICIAL, //TORCH, LAMP, ETC
@@ -15,7 +17,7 @@ enum VoxelLightType {
 
 struct VoxelLightData {
 	VoxelLightType type;
-	uint8_t new_value;
+	unsigned char new_value;
 	Vector3i voxel;
 };
 
