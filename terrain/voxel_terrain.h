@@ -7,8 +7,7 @@
 #include "../util/zprofiling.h"
 #include "voxel_data_loader.h"
 #include "voxel_mesh_updater.h"
-
-#include "../light/voxel_light.h"
+#include "../light/voxel_light_spreader.h"
 
 #include <scene/3d/spatial.h>
 
@@ -69,9 +68,11 @@ public:
 
 	struct Stats {
 		VoxelMeshUpdater::Stats updater;
+		VoxelLightSpreader::Stats light_spreader;
 		VoxelDataLoader::Stats stream;
 		uint32_t mesh_alloc_time;
 		int updated_blocks;
+		int spread_blocks;
 		int dropped_stream_blocks;
 		int dropped_updater_blocks;
 		int remaining_main_thread_blocks;

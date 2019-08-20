@@ -33,6 +33,7 @@ public:
 	struct MeshingParams {
 		Ref<VoxelLibrary> library;
 		bool baked_ao = true;
+		bool baked_light = false;
 		float baked_ao_darkness = 0.75;
 		bool smooth_surface = false;
 	};

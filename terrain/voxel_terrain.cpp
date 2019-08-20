@@ -3,7 +3,6 @@
 #include "../util/profiling_clock.h"
 #include "../util/utility.h"
 #include "../util/voxel_raycast.h"
-#include "../light/voxel_light_spreader.h"
 #include "voxel_block.h"
 #include "voxel_map.h"
 
@@ -197,6 +196,7 @@ void VoxelTerrain::make_block_dirty(Vector3i bpos) {
 		*state = BLOCK_UPDATE_NOT_SENT;
 		_blocks_pending_update.push_back(bpos);
 	}
+	//If the state is LOAD, LIGHT_NOT_SENT or LIGHT_SENT do nothing, since the block will be update already anyway.
 
 	//OS::get_singleton()->print("Dirty (%i, %i, %i)", bpos.x, bpos.y, bpos.z);
 
@@ -766,7 +766,25 @@ void VoxelTerrain::_process() {
 
 	// Get light spread responses
 	if (_lighting_enabled) {
+		VoxelLightSpreader::Output output;
+		_light_spreader->pop(output);
 
+		_stats.light_spreader = output.stats;
+		_stats.spread_blocks = output.blocks.size();
+
+		for (int i = 0; i < output.blocks.size(); ++i) {
+			const VoxelLightSpreader::OutputBlock &out_block = output.blocks[i];
+			
+			VoxelTerrain::BlockDirtyState *block_state = _dirty_blocks.getptr(out_block.position);
+			CRASH_COND(block_state == NULL);
+
+			if (*block_state != BLOCK_UPDATE_NOT_SENT) {
+				_blocks_pending_update.push_back(out_block.position);
+			}
+
+			_map->set_block_buffer(out_block.position, out_block.data.voxels);
+			//TODO: Spread light on affected neighbors
+		}
 	}
 	_stats.time_process_light_responses = profiling_clock.restart();
 

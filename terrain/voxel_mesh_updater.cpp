@@ -40,6 +40,7 @@ VoxelMeshUpdater::VoxelMeshUpdater(unsigned int thread_count, MeshingParams para
 		blocky_mesher.instance();
 		blocky_mesher->set_library(params.library);
 		blocky_mesher->set_occlusion_enabled(params.baked_ao);
+		blocky_mesher->set_light_enabled(params.baked_light);
 		blocky_mesher->set_occlusion_darkness(params.baked_ao_darkness);
 	}
 

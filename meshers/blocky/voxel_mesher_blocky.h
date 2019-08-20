@@ -27,6 +27,9 @@ public:
 	void set_occlusion_enabled(bool enable);
 	bool get_occlusion_enabled() const { return _bake_occlusion; }
 
+	void set_light_enabled(bool enable);
+	bool get_light_enabled() const { return _bake_light; }
+
 	void build(VoxelMesher::Output &output, const VoxelBuffer &voxels, int padding) override;
 	int get_minimum_padding() const override;
 
@@ -50,6 +53,7 @@ private:
 	Arrays _arrays[MAX_MATERIALS];
 	float _baked_occlusion_darkness;
 	bool _bake_occlusion;
+	bool _bake_light;
 
 #ifdef VOXEL_PROFILING
 	ZProfiler _zprofiler;

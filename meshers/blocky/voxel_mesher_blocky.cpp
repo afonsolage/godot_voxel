@@ -38,7 +38,8 @@ inline bool is_transparent(const VoxelLibrary &lib, int voxel_id) {
 
 VoxelMesherBlocky::VoxelMesherBlocky() :
 		_baked_occlusion_darkness(0.8),
-		_bake_occlusion(true) {}
+		_bake_occlusion(true),
+		_bake_light(false) {}
 
 void VoxelMesherBlocky::set_library(Ref<VoxelLibrary> library) {
 	_library = library;
@@ -55,6 +56,10 @@ void VoxelMesherBlocky::set_occlusion_darkness(float darkness) {
 
 void VoxelMesherBlocky::set_occlusion_enabled(bool enable) {
 	_bake_occlusion = enable;
+}
+
+void VoxelMesherBlocky::set_light_enabled(bool enable) {
+	_bake_light = enable;
 }
 
 void VoxelMesherBlocky::build(VoxelMesher::Output &output, const VoxelBuffer &buffer, int padding) {
@@ -121,12 +126,7 @@ void VoxelMesherBlocky::build(VoxelMesher::Output &output, const VoxelBuffer &bu
 	}
 
 	uint8_t *light_buffer = buffer.get_channel_raw(light_channel);
-	bool use_light_buffer = light_buffer != nullptr;
-
-	if (use_light_buffer) {
-		//Light buffer should have the same size as type buffer.
-		CRASH_COND(memarr_len(light_buffer) != memarr_len(type_buffer));
-	}
+	bool light_buffer_uniform = light_buffer == nullptr;
 
 	//CRASH_COND(memarr_len(type_buffer) != buffer.get_volume() * sizeof(uint8_t));
 
@@ -262,13 +262,13 @@ void VoxelMesherBlocky::build(VoxelMesher::Output &output, const VoxelBuffer &bu
 									}
 								}
 
-								if (use_light_buffer) {
+								if (_bake_light) {
 									int append_index = arrays.colors.size();
 									arrays.colors.resize(arrays.colors.size() + vertex_count);
 									Color *ptr = arrays.colors.data() + append_index;
 
 									for (unsigned int i = 0; i < vertex_count; ++i) {
-										int light_value = light_buffer[voxel_index];
+										int light_value = (light_buffer_uniform) ? 0.0f : light_buffer[voxel_index];
 										ptr[i] = Color(light_value/15.f, light_value/15.f, light_value/15.f);
 									}
 								}
@@ -277,7 +277,7 @@ void VoxelMesherBlocky::build(VoxelMesher::Output &output, const VoxelBuffer &bu
 									// Use color array
 
 									Color *ptr;
-									if (!use_light_buffer) {
+									if (!_bake_light) {
 										int append_index = arrays.colors.size();
 										arrays.colors.resize(arrays.colors.size() + vertex_count);
 										ptr = arrays.colors.data() + append_index;
@@ -304,7 +304,7 @@ void VoxelMesherBlocky::build(VoxelMesher::Output &output, const VoxelBuffer &bu
 													shade = s;
 											}
 										}
-										if (!use_light_buffer) {
+										if (!_bake_light) {
 											float gs = (1.0 - shade);
 											ptr[i] = Color(gs, gs, gs);
 										} else {
@@ -436,6 +436,7 @@ VoxelMesher *VoxelMesherBlocky::clone() {
 	c->set_library(_library);
 	c->set_occlusion_darkness(_baked_occlusion_darkness);
 	c->set_occlusion_enabled(_bake_occlusion);
+	c->set_light_enabled(_bake_light);
 	return c;
 }
 
@@ -446,6 +447,9 @@ void VoxelMesherBlocky::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_occlusion_enabled", "enable"), &VoxelMesherBlocky::set_occlusion_enabled);
 	ClassDB::bind_method(D_METHOD("get_occlusion_enabled"), &VoxelMesherBlocky::get_occlusion_enabled);
+
+	ClassDB::bind_method(D_METHOD("set_light_enabled", "enable"), &VoxelMesherBlocky::set_light_enabled);
+	ClassDB::bind_method(D_METHOD("get_light_enabled"), &VoxelMesherBlocky::get_light_enabled);
 
 	ClassDB::bind_method(D_METHOD("set_occlusion_darkness", "value"), &VoxelMesherBlocky::set_occlusion_darkness);
 	ClassDB::bind_method(D_METHOD("get_occlusion_darkness"), &VoxelMesherBlocky::get_occlusion_darkness);
