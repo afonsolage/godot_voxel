@@ -117,6 +117,12 @@ void VoxelTerrain::set_generate_collisions(bool enabled) {
 	_generate_collisions = enabled;
 }
 
+void VoxelTerrain::set_light_enabled(bool enabled) {
+	_light_enabled = enabled;
+
+	reset_updater();
+}
+
 int VoxelTerrain::get_view_distance() const {
 	return _view_distance_blocks * _map->get_block_size();
 }
@@ -278,6 +284,7 @@ void VoxelTerrain::reset_updater() {
 	VoxelMeshUpdater::MeshingParams params;
 	params.smooth_surface = _smooth_meshing_enabled;
 	params.library = _library;
+	params.baked_light = _light_enabled;
 
 	_block_updater = memnew(VoxelMeshUpdater(1, params));
 	
@@ -1061,6 +1068,9 @@ void VoxelTerrain::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_smooth_meshing_enabled"), &VoxelTerrain::is_smooth_meshing_enabled);
 	ClassDB::bind_method(D_METHOD("set_smooth_meshing_enabled", "enabled"), &VoxelTerrain::set_smooth_meshing_enabled);
 
+	ClassDB::bind_method(D_METHOD("get_light_enabled"), &VoxelTerrain::get_light_enabled);
+	ClassDB::bind_method(D_METHOD("set_light_enabled", "enabled"), &VoxelTerrain::set_light_enabled);
+
 	ClassDB::bind_method(D_METHOD("get_storage"), &VoxelTerrain::get_map);
 
 	ClassDB::bind_method(D_METHOD("voxel_to_block", "voxel_pos"), &VoxelTerrain::_voxel_to_block_binding);
@@ -1080,9 +1090,12 @@ void VoxelTerrain::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "viewer_path"), "set_viewer_path", "get_viewer_path");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "generate_collisions"), "set_generate_collisions", "get_generate_collisions");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "smooth_meshing_enabled"), "set_smooth_meshing_enabled", "is_smooth_meshing_enabled");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "light_enabled"), "set_light_enabled", "get_light_enabled");
 
 	BIND_ENUM_CONSTANT(BLOCK_NONE);
 	BIND_ENUM_CONSTANT(BLOCK_LOAD);
+	BIND_ENUM_CONSTANT(BLOCK_LIGHT_SENT);
+	BIND_ENUM_CONSTANT(BLOCK_LIGHT_NOT_SENT);
 	BIND_ENUM_CONSTANT(BLOCK_UPDATE_NOT_SENT);
 	BIND_ENUM_CONSTANT(BLOCK_UPDATE_SENT);
 	BIND_ENUM_CONSTANT(BLOCK_IDLE);

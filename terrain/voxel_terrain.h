@@ -52,6 +52,9 @@ public:
 	void set_generate_collisions(bool enabled);
 	bool get_generate_collisions() const { return _generate_collisions; }
 
+	void set_light_enabled(bool enabled);
+	bool get_light_enabled() const { return _light_enabled; }
+
 	int get_view_distance() const;
 	void set_view_distance(int distance_in_voxels);
 
@@ -164,6 +167,7 @@ private:
 	bool _generate_collisions;
 	bool _run_in_editor;
 	bool _smooth_meshing_enabled;
+	bool _light_enabled;
 
 	Ref<Material> _materials[VoxelMesherBlocky::MAX_MATERIALS];
 
