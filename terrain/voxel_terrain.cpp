@@ -304,9 +304,15 @@ inline int get_border_index(int x, int max) {
 	return x == 0 ? 0 : x != max ? 1 : 2;
 }
 
+void VoxelTerrain::set_voxel_natural_light(Vector3 pos, int new_value) {
+	_set_voxel_light(VoxelLightType::NATURAL, pos, new_value);
+}
 
+void VoxelTerrain::set_voxel_artificial_light(Vector3 pos, int new_value) {
+	_set_voxel_light(VoxelLightType::ARTIFICIAL, pos, new_value);
+}
 
-void VoxelTerrain::set_voxel_light(VoxelLightType type, Vector3i pos, int new_value) {
+void VoxelTerrain::_set_voxel_light(VoxelLightType type, Vector3 pos, int new_value) {
 	Vector3i block_pos = _map->voxel_to_block(pos);
 
 	if (_pending_light_data.has(block_pos)) {
@@ -1078,6 +1084,9 @@ void VoxelTerrain::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("make_voxel_dirty", "pos"), &VoxelTerrain::_make_voxel_dirty_binding);
 	ClassDB::bind_method(D_METHOD("make_area_dirty", "aabb"), &VoxelTerrain::_make_area_dirty_binding);
+
+	ClassDB::bind_method(D_METHOD("set_voxel_natural_light", "voxel_pos", "light_value"), &VoxelTerrain::set_voxel_natural_light);
+	ClassDB::bind_method(D_METHOD("set_voxel_artificial_light", "voxel_pos", "light_value"), &VoxelTerrain::set_voxel_artificial_light);
 
 	ClassDB::bind_method(D_METHOD("raycast", "origin", "direction", "max_distance"), &VoxelTerrain::_raycast_binding, DEFVAL(100));
 

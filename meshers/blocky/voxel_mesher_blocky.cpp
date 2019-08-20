@@ -277,7 +277,7 @@ void VoxelMesherBlocky::build(VoxelMesher::Output &output, const VoxelBuffer &bu
 									// Use color array
 
 									Color *ptr;
-									if (!_bake_light) {
+									if (arrays.colors.size() < arrays.positions.size()) {
 										int append_index = arrays.colors.size();
 										arrays.colors.resize(arrays.colors.size() + vertex_count);
 										ptr = arrays.colors.data() + append_index;

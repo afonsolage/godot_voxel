@@ -41,7 +41,9 @@ public:
 	void set_voxel_library(Ref<VoxelLibrary> library);
 	Ref<VoxelLibrary> get_voxel_library() const;
 
-	void set_voxel_light(VoxelLightType type, Vector3i pos, int new_value);
+	void set_voxel_natural_light(Vector3 pos, int new_value);
+	void set_voxel_artificial_light(Vector3 pos, int new_value);
+	void _set_voxel_light(VoxelLightType type, Vector3 pos, int new_value);
 
 	void make_block_dirty(Vector3i bpos);
 	//void make_blocks_dirty(Vector3i min, Vector3i size);
