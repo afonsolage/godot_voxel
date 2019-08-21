@@ -293,7 +293,7 @@ void VoxelTerrain::reset_updater() {
 			memdelete(_light_spreader);
 			_light_spreader = NULL;
 		}
-		_light_spreader = memnew(VoxelLightSpreader(1, _map->get_block_size_pow2()));
+		_light_spreader = memnew(VoxelLightSpreader(1, _map->get_block_size_pow2(), 1));
 	}
 
 
@@ -754,6 +754,7 @@ void VoxelTerrain::_process() {
 
 		for (int i = 0; i < block_list.size(); ++i) {
 			Vector3i &block_pos = block_list[i];
+			print_line(String("Request block {0}, {1}, {2}").format(varray(block_pos.x, block_pos.y, block_pos.z)));
 
 			VoxelTerrain::BlockDirtyState *block_state = _dirty_blocks.getptr(block_pos);
 
@@ -764,11 +765,24 @@ void VoxelTerrain::_process() {
 				_blocks_pending_update.erase(block_pos);
 			}
 
-			*block_state = BLOCK_LIGHT_SENT;
+			Ref<VoxelBuffer> nbuffer;
+			nbuffer.instance();
+
+			// TODO Make the buffer re-usable
+			unsigned int block_size = _map->get_block_size();
+			unsigned int padding = _light_spreader->get_padding();
+			nbuffer->create(block_size + 2 * padding, block_size + 2 * padding, block_size + 2 * padding);
+
+			unsigned int channels_mask = (1 << VoxelBuffer::CHANNEL_LIGHT);
+			_map->get_buffer_copy(_map->block_to_voxel(block_pos) - Vector3i(padding), **nbuffer, channels_mask);
 
 			VoxelLightSpreader::InputBlock input_block;
 			input_block.data.voxels = _map->get_block(block_pos);
 			input_block.data.spread_data.append_array(_pending_light_data[block_pos]);
+			input_block.data.voxels = nbuffer;
+
+			input.blocks.push_back(input_block);
+			*block_state = BLOCK_LIGHT_SENT;
 		}
 		
 		_light_spreader->push(input);
@@ -793,6 +807,8 @@ void VoxelTerrain::_process() {
 			if (*block_state != BLOCK_UPDATE_NOT_SENT) {
 				_blocks_pending_update.push_back(out_block.position);
 			}
+
+			print_line(String("Response block {0}, {1}, {2}").format(varray(out_block.position.x, out_block.position.y, out_block.position.z)));
 
 			_map->set_block_buffer(out_block.position, out_block.data.voxels);
 			//TODO: Spread light on affected neighbors

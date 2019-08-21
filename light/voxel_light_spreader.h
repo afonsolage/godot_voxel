@@ -29,6 +29,7 @@ public:
 
 		int block_size_pow2 = 0;
 		int light_channel = 0;
+		unsigned int padding = 0;
 
 		std::queue<BFSNode> art_add_queue;
 		std::queue<BFSNode> art_remove_queue;
@@ -58,14 +59,17 @@ public:
 	typedef Mgr::Stats Stats;
 	typedef Processor::BFSNode BFSNode;
 
-	VoxelLightSpreader(int thread_count, int block_size_pow2);
+	VoxelLightSpreader(int thread_count, int block_size_pow2, unsigned int padding);
 	~VoxelLightSpreader();
 
 	void push(const Input &input) { _mgr->push(input); }
 	void pop(Output &output) { _mgr->pop(output); }
 
+	unsigned int get_padding() const { return _padding; }
+
 private:
 	Mgr *_mgr = nullptr;
+	unsigned int _padding = 0;
 };
 
 #endif

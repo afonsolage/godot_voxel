@@ -1,17 +1,18 @@
 #include "voxel_light_spreader.h"
 #include "../voxel_buffer.h"
 
-VoxelLightSpreader::VoxelLightSpreader(int thread_count, int block_size_pow2) {
-
+VoxelLightSpreader::VoxelLightSpreader(int thread_count, int block_size_pow2, unsigned int padding) {
 	Processor processors[Mgr::MAX_JOBS];
 
 	for (int i = 0; i < thread_count; ++i) {
 		Processor &p = processors[i];
 		p.block_size_pow2 = block_size_pow2;
 		p.light_channel = VoxelBuffer::CHANNEL_LIGHT;
+		p.padding = padding;
 	}
 
-	_mgr = memnew(Mgr(thread_count, 500, processors, true));
+	_mgr = memnew(Mgr(thread_count, 500, processors));
+	_padding = padding;
 }
 
 VoxelLightSpreader::~VoxelLightSpreader() {
@@ -21,15 +22,18 @@ VoxelLightSpreader::~VoxelLightSpreader() {
 }
 
 void VoxelLightSpreader::Processor::process_block(const InputBlockData &input, OutputBlockData &output, Vector3i block_position, unsigned int lod) {
+	print_line(String("Processing block {0}, {1}, {2}").format(varray(block_position.x, block_position.y, block_position.z)));
 
 	CRASH_COND(input.voxels.is_null());
 
 	const VoxelBuffer &input_buffer = **input.voxels;
-	VoxelBuffer &output_buffer = **output.voxels;
+	Ref<VoxelBuffer> out_buffer;
 
 	const uint8_t light_channel = VoxelBuffer::CHANNEL_LIGHT;
 
-	output_buffer.copy_from(input_buffer, light_channel);
+	out_buffer.instance();
+	out_buffer->create(input_buffer.get_size().x, input_buffer.get_size().y, input_buffer.get_size().z);
+	out_buffer->copy_from(input_buffer, light_channel);
 
 	std::queue<BFSNode> art_remove_queue;
 	std::queue<BFSNode> art_add_queue;
@@ -54,8 +58,10 @@ void VoxelLightSpreader::Processor::process_block(const InputBlockData &input, O
 		}
 	}
 
-	remove_artificial_light(output_buffer);
-	add_artificial_light(output_buffer);
+	remove_artificial_light(**out_buffer);
+	add_artificial_light(**out_buffer);
+
+	output.voxels = out_buffer;
 }
 
 static inline void update_artificial_light(VoxelBuffer &buffer, Vector3i position, int value, int light_channel) {
