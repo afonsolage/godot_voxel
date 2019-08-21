@@ -16,7 +16,7 @@ VoxelTerrain::VoxelTerrain() {
 
 	_view_distance_blocks = 8;
 	_last_view_distance_blocks = 0;
-	_lighting_enabled = false;
+	_light_enabled = false;
 
 	_stream_thread = NULL;
 	_block_updater = NULL;
@@ -288,7 +288,7 @@ void VoxelTerrain::reset_updater() {
 
 	_block_updater = memnew(VoxelMeshUpdater(1, params));
 	
-	if (_lighting_enabled) {
+	if (_light_enabled) {
 		if (_light_spreader) {
 			memdelete(_light_spreader);
 			_light_spreader = NULL;
@@ -744,8 +744,7 @@ void VoxelTerrain::_process() {
 	}
 	_stats.time_process_load_responses = profiling_clock.restart();
 
-	// Send light spread
-	if (_lighting_enabled) {
+	if (_light_enabled) {
 		VoxelLightSpreader::Input input;
 		input.priority_position = viewer_block_pos;
 		input.priority_direction = viewer_direction;

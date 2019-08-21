@@ -141,8 +141,6 @@ private:
 	// How many blocks to load around the viewer
 	int _view_distance_blocks;
 
-	bool _lighting_enabled;
-
 	// TODO Terrains only need to handle the visible portion of voxels, which reduces the bounds blocks to handle.
 	// Therefore, could a simple grid be better to use than a hashmap?
 
