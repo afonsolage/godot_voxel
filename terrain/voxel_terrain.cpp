@@ -777,7 +777,7 @@ void VoxelTerrain::_process() {
 	_stats.time_send_light_requests = profiling_clock.restart();
 
 	// Get light spread responses
-	if (_lighting_enabled) {
+	if (_light_enabled) {
 		VoxelLightSpreader::Output output;
 		_light_spreader->pop(output);
 
