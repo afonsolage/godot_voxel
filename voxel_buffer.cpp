@@ -193,7 +193,7 @@ void VoxelBuffer::compress_uniform_channels() {
 
 void VoxelBuffer::copy_from(const VoxelBuffer &other, unsigned int channel_index) {
 	ERR_FAIL_INDEX(channel_index, MAX_CHANNELS);
-	ERR_FAIL_COND(other._size == _size);
+	ERR_FAIL_COND(other._size != _size);
 
 	Channel &channel = _channels[channel_index];
 	const Channel &other_channel = other._channels[channel_index];
