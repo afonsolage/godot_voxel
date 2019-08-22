@@ -780,6 +780,7 @@ void VoxelTerrain::_process() {
 			input_block.data.voxels = _map->get_block(block_pos);
 			input_block.data.spread_data.append_array(_pending_light_data[block_pos]);
 			input_block.data.voxels = nbuffer;
+			input_block.position = block_pos;
 
 			input.blocks.push_back(input_block);
 			*block_state = BLOCK_LIGHT_SENT;
@@ -802,9 +803,14 @@ void VoxelTerrain::_process() {
 			const VoxelLightSpreader::OutputBlock &out_block = output.blocks[i];
 			
 			VoxelTerrain::BlockDirtyState *block_state = _dirty_blocks.getptr(out_block.position);
-			CRASH_COND(block_state == NULL);
 
-			if (*block_state != BLOCK_UPDATE_NOT_SENT) {
+			//Only update dirt_blocks if it isn't on update not sent already
+			if (block_state == NULL || *block_state != BLOCK_UPDATE_NOT_SENT) {
+				if (block_state == NULL) {
+					_dirty_blocks[out_block.position] = BLOCK_UPDATE_NOT_SENT;
+				} else {
+					*block_state = BLOCK_UPDATE_NOT_SENT;
+				}
 				_blocks_pending_update.push_back(out_block.position);
 			}
 
