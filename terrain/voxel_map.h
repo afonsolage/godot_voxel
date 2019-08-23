@@ -61,6 +61,7 @@ public:
 
 	// Moves the given buffer into a block of the map. The buffer is referenced, no copy is made.
 	VoxelBlock *set_block_buffer(Vector3i bpos, Ref<VoxelBuffer> buffer);
+	void set_block_channel_buffer(Vector3i bpos, const Ref<VoxelBuffer> buffer, unsigned int channel, unsigned int buffer_padding = 0);
 
 	struct NoAction {
 		inline void operator()(VoxelBlock *block) {}
