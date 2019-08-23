@@ -226,7 +226,7 @@ void VoxelBuffer::copy_from(const VoxelBuffer &other, Vector3i src_min, Vector3i
 	Vector3i area_size = src_max - src_min;
 	//Vector3i dst_max = dst_min + area_size;
 
-	if (other._size == _size) {
+	if (area_size == _size && other._size == _size) {
 		copy_from(other, channel_index);
 	} else {
 		if (other_channel.data) {
