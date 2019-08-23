@@ -126,7 +126,7 @@ void VoxelMesherBlocky::build(VoxelMesher::Output &output, const VoxelBuffer &bu
 	}
 
 	uint8_t *light_buffer = buffer.get_channel_raw(light_channel);
-	bool light_buffer_uniform = light_buffer == nullptr;
+	bool is_light_uniform = light_buffer == NULL;
 
 	//CRASH_COND(memarr_len(type_buffer) != buffer.get_volume() * sizeof(uint8_t));
 
@@ -266,10 +266,21 @@ void VoxelMesherBlocky::build(VoxelMesher::Output &output, const VoxelBuffer &bu
 									int append_index = arrays.colors.size();
 									arrays.colors.resize(arrays.colors.size() + vertex_count);
 									Color *ptr = arrays.colors.data() + append_index;
+									
+									int neighbor_light = 0;
+
+									if (!is_light_uniform) {
+										unsigned int neighbor = side_neighbor_lut[side];
+										int neighbor_type = type_buffer[voxel_index + neighbor];
+
+										CRASH_COND(!is_transparent(library, neighbor_type));
+
+										neighbor_light = light_buffer[voxel_index + neighbor];
+									}
 
 									for (unsigned int i = 0; i < vertex_count; ++i) {
-										int light_value = (light_buffer_uniform) ? 0.0f : light_buffer[voxel_index];
-										ptr[i] = Color(light_value/15.f, light_value/15.f, light_value/15.f);
+
+										ptr[i] = Color(neighbor_light/15.f, neighbor_light/15.f, neighbor_light/15.f);
 									}
 								}
 
@@ -304,11 +315,12 @@ void VoxelMesherBlocky::build(VoxelMesher::Output &output, const VoxelBuffer &bu
 													shade = s;
 											}
 										}
-										if (!_bake_light) {
-											float gs = (1.0 - shade);
-											ptr[i] = Color(gs, gs, gs);
+										
+										float gs = (1.0 - shade);
+										if (_bake_light) {
+											ptr[i] *= gs;
 										} else {
-											ptr[i] *= shade;
+											ptr[i] = Color(gs, gs, gs);
 										}
 									}
 								}

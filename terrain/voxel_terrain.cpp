@@ -317,10 +317,10 @@ void VoxelTerrain::_set_voxel_light(VoxelLightType type, Vector3 pos, int new_va
 
 	if (_pending_light_data.has(block_pos)) {
 		Vector<VoxelLightData> &light_data_list = _pending_light_data.get(block_pos);
-		light_data_list.push_back(VoxelLightData{ type, (uint8_t)new_value, pos });
+		light_data_list.push_back(VoxelLightData{ type, (uint8_t)new_value, _map->to_local(pos) });
 	} else {
 		Vector<VoxelLightData> light_data_list;
-		light_data_list.push_back(VoxelLightData{ type, (uint8_t)new_value, pos });
+		light_data_list.push_back(VoxelLightData{ type, (uint8_t)new_value, _map->to_local(pos) });
 		_pending_light_data[block_pos] = light_data_list;
 	}
 }
@@ -814,10 +814,12 @@ void VoxelTerrain::_process() {
 				_blocks_pending_update.push_back(out_block.position);
 			}
 
-			print_line(String("Response block {0}, {1}, {2}").format(varray(out_block.position.x, out_block.position.y, out_block.position.z)));
-
-			_map->set_block_buffer(out_block.position, out_block.data.voxels);
+			_map->set_block_channel_buffer(out_block.position, out_block.data.voxels, VoxelBuffer::CHANNEL_LIGHT, _light_spreader->get_padding());
 			//TODO: Spread light on affected neighbors
+
+			bool uniform = _map->get_block(out_block.position)->voxels->is_uniform(VoxelBuffer::CHANNEL_LIGHT);
+
+			print_line(String("Response block {0}, {1}, {2} - {3}, {4}").format(varray(out_block.position.x, out_block.position.y, out_block.position.z, out_block.data.voxels->is_uniform(VoxelBuffer::CHANNEL_LIGHT), uniform)));
 		}
 	}
 	_stats.time_process_light_responses = profiling_clock.restart();
@@ -877,7 +879,7 @@ void VoxelTerrain::_process() {
 			unsigned int padding = _block_updater->get_required_padding();
 			nbuffer->create(block_size + 2 * padding, block_size + 2 * padding, block_size + 2 * padding);
 
-			unsigned int channels_mask = (1 << VoxelBuffer::CHANNEL_TYPE) | (1 << VoxelBuffer::CHANNEL_ISOLEVEL);
+			unsigned int channels_mask = (1 << VoxelBuffer::CHANNEL_TYPE) | (1 << VoxelBuffer::CHANNEL_ISOLEVEL | (1 << VoxelBuffer::CHANNEL_LIGHT));
 			_map->get_buffer_copy(_map->block_to_voxel(block_pos) - Vector3i(padding), **nbuffer, channels_mask);
 
 			VoxelMeshUpdater::InputBlock iblock;
