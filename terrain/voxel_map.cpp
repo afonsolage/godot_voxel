@@ -169,7 +169,7 @@ void VoxelMap::set_block_channel_buffer(Vector3i bpos, const Ref<VoxelBuffer> bu
 	if (buffer_padding == 0) {
 		block->voxels->copy_from(**buffer, channel);
 	} else {
-		block->voxels->copy_from(**buffer, Vector3i(buffer_padding), buffer->get_size() - buffer_padding, Vector3i(), channel);
+		block->voxels->copy_from(**buffer, Vector3i(buffer_padding), buffer->get_size() - 2 * buffer_padding, Vector3i(), channel);
 	}
 }
 
