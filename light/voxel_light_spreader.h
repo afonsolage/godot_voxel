@@ -5,6 +5,7 @@
 #include "voxel_light.h"
 #include "../terrain/block_thread_manager.h"
 
+class VoxelLibrary;
 class VoxelBuffer;
 
 class VoxelLightSpreader {
@@ -23,13 +24,22 @@ public:
 		struct BFSNode {
 			Vector3i position;
 			int value;
+
+			BFSNode(Vector3i pos, int val) {
+				position = pos;
+				value = val;
+			}
 		};
 
 		void process_block(const InputBlockData &input, OutputBlockData &output, Vector3i block_position, unsigned int log);
 
-		int block_size_pow2 = 0;
-		int light_channel = 0;
+		Vector3i min_boundary;
+		Vector3i max_boundary;
+		unsigned int light_channel = 0;
+		unsigned int type_channel = 0;
 		unsigned int padding = 0;
+
+		Ref<VoxelLibrary> library;
 
 		std::queue<BFSNode> art_add_queue;
 		std::queue<BFSNode> art_remove_queue;
@@ -37,10 +47,14 @@ public:
 		std::queue<BFSNode> nat_remove_queue;
 
 	private:
-		void add_artificial_light(VoxelBuffer &buffer);
-		void remove_artificial_light(VoxelBuffer &buffer);
+		void add_artificial_light(const VoxelBuffer &input_buffer, VoxelBuffer &buffer);
+		void remove_artificial_light(const VoxelBuffer &input_buffer, VoxelBuffer &buffer);
+		
 		void add_natural_light(VoxelBuffer &buffer);
 		void remove_natural_light(VoxelBuffer &buffer);
+
+		int get_padded_voxel(const VoxelBuffer &buffer, unsigned int channel, Vector3i position);
+		bool is_transparent(const VoxelBuffer &buffer, Vector3i position);
 
 		inline std::queue<BFSNode> &get_queue(const int light_type, const bool is_add) {
 			if (light_type == VoxelLightType::ARTIFICIAL)
@@ -59,7 +73,7 @@ public:
 	typedef Mgr::Stats Stats;
 	typedef Processor::BFSNode BFSNode;
 
-	VoxelLightSpreader(int thread_count, int block_size_pow2, unsigned int padding);
+	VoxelLightSpreader(int thread_count, int block_size_pow2, unsigned int padding, Ref<VoxelLibrary> library);
 	~VoxelLightSpreader();
 
 	void push(const Input &input) { _mgr->push(input); }

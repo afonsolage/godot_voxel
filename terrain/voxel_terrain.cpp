@@ -293,7 +293,7 @@ void VoxelTerrain::reset_updater() {
 			memdelete(_light_spreader);
 			_light_spreader = NULL;
 		}
-		_light_spreader = memnew(VoxelLightSpreader(1, _map->get_block_size_pow2(), 1));
+		_light_spreader = memnew(VoxelLightSpreader(1, _map->get_block_size_pow2(), 1, _library));
 	}
 
 
@@ -773,7 +773,7 @@ void VoxelTerrain::_process() {
 			unsigned int padding = _light_spreader->get_padding();
 			nbuffer->create(block_size + 2 * padding, block_size + 2 * padding, block_size + 2 * padding);
 
-			unsigned int channels_mask = (1 << VoxelBuffer::CHANNEL_LIGHT);
+			unsigned int channels_mask = (1 << VoxelBuffer::CHANNEL_LIGHT) | (1 << VoxelBuffer::CHANNEL_TYPE);
 			_map->get_buffer_copy(_map->block_to_voxel(block_pos) - Vector3i(padding), **nbuffer, channels_mask);
 
 			VoxelLightSpreader::InputBlock input_block;
