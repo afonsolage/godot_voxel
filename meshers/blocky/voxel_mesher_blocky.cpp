@@ -2,6 +2,7 @@
 #include "../../cube_tables.h"
 #include "../../util/utility.h"
 #include "../../voxel_library.h"
+#include "../../light/voxel_light.h"
 #include <core/os/os.h>
 
 namespace {
@@ -267,20 +268,15 @@ void VoxelMesherBlocky::build(VoxelMesher::Output &output, const VoxelBuffer &bu
 									arrays.colors.resize(arrays.colors.size() + vertex_count);
 									Color *ptr = arrays.colors.data() + append_index;
 									
-									int neighbor_light = 0;
+									float neighbor_light = 0;
 
 									if (!is_light_uniform) {
 										unsigned int neighbor = side_neighbor_lut[side];
-										int neighbor_type = type_buffer[voxel_index + neighbor];
-
-										CRASH_COND(!is_transparent(library, neighbor_type));
-
 										neighbor_light = light_buffer[voxel_index + neighbor];
 									}
 
 									for (unsigned int i = 0; i < vertex_count; ++i) {
-
-										ptr[i] = Color(neighbor_light/15.f, neighbor_light/15.f, neighbor_light/15.f);
+										ptr[i] = Color(neighbor_light/LIGHT_MAX_VALUE, neighbor_light/LIGHT_MAX_VALUE, neighbor_light/LIGHT_MAX_VALUE);
 									}
 								}
 

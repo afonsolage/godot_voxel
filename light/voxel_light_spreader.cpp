@@ -8,8 +8,8 @@ VoxelLightSpreader::VoxelLightSpreader(int thread_count, int block_size_pow2, un
 
 	for (int i = 0; i < thread_count; ++i) {
 		Processor &p = processors[i];
-		p.max_boundary = Vector3i((1 << block_size_pow2) + padding);
 		p.min_boundary = Vector3i(padding);
+		p.max_boundary = Vector3i(1 << block_size_pow2) + p.min_boundary;
 		p.light_channel = VoxelBuffer::CHANNEL_LIGHT;
 		p.type_channel = VoxelBuffer::CHANNEL_TYPE;
 		p.library = library;
@@ -26,11 +26,15 @@ VoxelLightSpreader::~VoxelLightSpreader() {
 	}
 }
 
+static inline String to_str(Vector3i pos) {
+	return String("[{0}, {1}, {2}]").format(varray(pos.x, pos.y, pos.z));
+}
+
 static inline void update_artificial_light(VoxelBuffer &buffer, Vector3i position, int value, int light_channel) {
 	int current_voxel_value = buffer.get_voxel(position, light_channel);
 	int new_voxel_value = set_art_light(current_voxel_value, value);
 	buffer.set_voxel(new_voxel_value, position, light_channel);
-	//print_line(String("Updating art light - pos: {0}, {1}, {2} - current: {3} - new value: {4}").format(varray(position.x, position.y, position.z, get_art_light(current_voxel_value), value)));
+	//print_line(String("Updating art light - pos: {0} - current: {1} - new value: {2}").format(varray(to_str(position), get_art_light(current_voxel_value), value)));
 }
 
 bool VoxelLightSpreader::Processor::is_transparent(const VoxelBuffer &buffer, Vector3i position) {
@@ -48,7 +52,7 @@ int VoxelLightSpreader::Processor::get_padded_voxel(const VoxelBuffer &buffer, u
 }
 
 void VoxelLightSpreader::Processor::process_block(const InputBlockData &input, OutputBlockData &output, Vector3i block_position, unsigned int lod) {
-	print_line(String("Processing block {0}, {1}, {2} [{3}]").format(varray(block_position.x, block_position.y, block_position.z, input.spread_data.size())));
+	print_line(String("Processing block {0} - {1} - boundary({2} -> {3})").format(varray(to_str(block_position), input.spread_data.size(), to_str(min_boundary), to_str(max_boundary))));
 
 	CRASH_COND(input.voxels.is_null());
 
@@ -118,6 +122,7 @@ void VoxelLightSpreader::Processor::add_artificial_light(const VoxelBuffer &inpu
 
 			//Can't spread to same voxel or to invalid voxel
 			if (!npos.is_contained_in(min_boundary, max_boundary)) {
+				print_line(String("Out of bounds: {0} - {1}").format(varray(to_str(npos), node.value)));
 				//TODO: Spread to neighbors
 				continue;
 			}
@@ -149,11 +154,11 @@ void VoxelLightSpreader::Processor::remove_artificial_light(const VoxelBuffer &i
 			Vector3i npos = node.position + Cube::g_side_normals[side];
 
 			if (!npos.is_contained_in(min_boundary, max_boundary)) {
-				//print_line(String("Out of bounds: {0}, {1}, {2} - {3}").format(varray(npos.x, npos.y, npos.z, node.value)));
+				print_line(String("Out of bounds: {0} - {1}").format(varray(to_str(npos), node.value)));
 				//TODO: Spread to neighbors
 				continue;
 			}
-			
+
 			int neighbor_light = get_art_light(buffer.get_voxel(npos, light_channel));
 
 			if (neighbor_light < LIGHT_DECREASE_POWER) {
