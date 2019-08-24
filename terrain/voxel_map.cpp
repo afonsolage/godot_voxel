@@ -158,18 +158,19 @@ VoxelBlock *VoxelMap::set_block_buffer(Vector3i bpos, Ref<VoxelBuffer> buffer) {
 void VoxelMap::set_block_channel_buffer(Vector3i bpos, const Ref<VoxelBuffer> buffer, unsigned int channel, unsigned int buffer_padding) {
 	ERR_FAIL_COND(buffer.is_null());
 	VoxelBlock *block = get_block(bpos);
+	Vector3i copy_size = buffer->get_size() - 2 * buffer_padding;
 	if (block == NULL) {
 		//TODO: Create a pool for voxel buffers?
 		Ref<VoxelBuffer> voxels;
 		voxels.instance();
-		voxels->create(buffer->get_size().x, buffer->get_size().y, buffer->get_size().z);
+		voxels->create(copy_size.x, copy_size.y, copy_size.z);
 		block = VoxelBlock::create(bpos, *voxels, _block_size, _lod_index);
 		set_block(bpos, block);
 	}
 	if (buffer_padding == 0) {
 		block->voxels->copy_from(**buffer, channel);
 	} else {
-		block->voxels->copy_from(**buffer, Vector3i(buffer_padding), buffer->get_size() - 2 * buffer_padding, Vector3i(), channel);
+		block->voxels->copy_from(**buffer, Vector3i(buffer_padding), Vector3i(buffer_padding) + copy_size, Vector3i(), channel);
 	}
 }
 
