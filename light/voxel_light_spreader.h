@@ -1,9 +1,9 @@
 #ifndef VOXEL_LIGHT_SPREADER_H
 #define VOXEL_LIGHT_SPREADER_H
 
+#include "../terrain/block_thread_manager.h"
 #include "queue"
 #include "voxel_light.h"
-#include "../terrain/block_thread_manager.h"
 
 class VoxelLibrary;
 class VoxelBuffer;
@@ -17,13 +17,13 @@ public:
 
 	struct OutputBlockData {
 		Ref<VoxelBuffer> voxels;
-		Vector<HashMap<Vector3i, VoxelLightData> > affected_blocks; //Block neighbors that were affect by this light spreader and which need to be updated
+		VoxelLightMap affected_blocks; //Block neighbors that were affect by this light spreader and which need to be updated
 	};
 
 	struct Processor {
 		struct BFSNode {
 			Vector3i position;
-			int value;
+			unsigned int value;
 
 			BFSNode(Vector3i pos, int val) {
 				position = pos;
@@ -47,9 +47,9 @@ public:
 		std::queue<BFSNode> nat_remove_queue;
 
 	private:
-		void add_artificial_light(const VoxelBuffer &input_buffer, VoxelBuffer &buffer);
-		void remove_artificial_light(const VoxelBuffer &input_buffer, VoxelBuffer &buffer);
-		
+		void add_artificial_light(const VoxelBuffer &input_buffer, VoxelBuffer &buffer, Vector3i block_position, VoxelLightMap &affected_blocks);
+		void remove_artificial_light(const VoxelBuffer &input_buffer, VoxelBuffer &buffer, Vector3i block_position, VoxelLightMap &affected_blocks);
+
 		void add_natural_light(VoxelBuffer &buffer);
 		void remove_natural_light(VoxelBuffer &buffer);
 

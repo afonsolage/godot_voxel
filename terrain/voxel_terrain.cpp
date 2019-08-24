@@ -315,15 +315,19 @@ void VoxelTerrain::set_voxel_artificial_light(Vector3 pos, int new_value) {
 	_set_voxel_light(VoxelLightType::ARTIFICIAL, pos, new_value);
 }
 
-void VoxelTerrain::_set_voxel_light(VoxelLightType type, Vector3 pos, int new_value) {
+void VoxelTerrain::_set_voxel_light(VoxelLightType type, const Vector3 pos, int new_value) {
 	Vector3i block_pos = _map->voxel_to_block(pos);
 
+	_set_pending_light_data(block_pos, VoxelLightData{ type, (uint8_t)new_value, _map->to_local(pos) });
+}
+
+void VoxelTerrain::_set_pending_light_data(const Vector3i block_pos, const VoxelLightData data) {
 	if (_pending_light_data.has(block_pos)) {
 		Vector<VoxelLightData> &light_data_list = _pending_light_data.get(block_pos);
-		light_data_list.push_back(VoxelLightData{ type, (uint8_t)new_value, _map->to_local(pos) });
+		light_data_list.push_back(data);
 	} else {
 		Vector<VoxelLightData> light_data_list;
-		light_data_list.push_back(VoxelLightData{ type, (uint8_t)new_value, _map->to_local(pos) });
+		light_data_list.push_back(data);
 		_pending_light_data[block_pos] = light_data_list;
 	}
 }
@@ -761,10 +765,8 @@ void VoxelTerrain::_process() {
 
 			VoxelTerrain::BlockDirtyState *block_state = _dirty_blocks.getptr(block_pos);
 
-			CRASH_COND(block_state == NULL);
-			
 			// Since we gonna change it, let's remove from pending queue
-			if (*block_state == BLOCK_UPDATE_NOT_SENT) {
+			if (block_state != NULL && *block_state == BLOCK_UPDATE_NOT_SENT) {
 				_blocks_pending_update.erase(block_pos);
 			}
 
@@ -786,7 +788,11 @@ void VoxelTerrain::_process() {
 			input_block.position = block_pos;
 
 			input.blocks.push_back(input_block);
-			*block_state = BLOCK_LIGHT_SENT;
+			if (block_state == NULL) {
+				_dirty_blocks[block_pos] = BLOCK_LIGHT_SENT;
+			} else {
+				*block_state = BLOCK_LIGHT_SENT;
+			}
 		}
 		
 		_light_spreader->push(input);
@@ -818,11 +824,18 @@ void VoxelTerrain::_process() {
 			}
 
 			_map->set_block_channel_buffer(out_block.position, out_block.data.voxels, VoxelBuffer::CHANNEL_LIGHT, _light_spreader->get_padding());
-			//TODO: Spread light on affected neighbors
+			
+			List<Vector3i> keys;
+			out_block.data.affected_blocks.get_key_list(&keys);
+			for(int k = 0; k < keys.size(); k++) {
+				Vector3i block_pos = keys[k];
+				const Vector<VoxelLightData> &data_vec = out_block.data.affected_blocks[block_pos];
+				for (int m = 0; m < data_vec.size(); m++) {
+					_set_pending_light_data(block_pos, data_vec.get(m));
+				}
+			}
 
-			bool uniform = _map->get_block(out_block.position)->voxels->is_uniform(VoxelBuffer::CHANNEL_LIGHT);
-
-			print_line(String("Response block {0}, {1}, {2} - {3}, {4}").format(varray(out_block.position.x, out_block.position.y, out_block.position.z, out_block.data.voxels->is_uniform(VoxelBuffer::CHANNEL_LIGHT), uniform)));
+			print_line(String("Response block {0}, {1}, {2} - {3}").format(varray(out_block.position.x, out_block.position.y, out_block.position.z, out_block.data.affected_blocks.size())));
 		}
 	}
 	_stats.time_process_light_responses = profiling_clock.restart();

@@ -133,6 +133,7 @@ private:
 	void set_voxel(Vector3 pos, int value, int c);
 	int get_voxel(Vector3 pos, int c);
 	BlockDirtyState get_block_state(Vector3 p_bpos) const;
+	void _set_pending_light_data(const Vector3i block_pos, const VoxelLightData data);
 
 private:
 	// Voxel storage
@@ -145,7 +146,7 @@ private:
 	// Therefore, could a simple grid be better to use than a hashmap?
 
 
-	HashMap<Vector3i, Vector<VoxelLightData>, Vector3iHasher> _pending_light_data;
+	VoxelLightMap _pending_light_data;
 
 	Vector<Vector3i> _blocks_pending_load;
 	Vector<Vector3i> _blocks_pending_update;

@@ -37,6 +37,14 @@ static inline void update_artificial_light(VoxelBuffer &buffer, Vector3i positio
 	//print_line(String("Updating art light - pos: {0} - current: {1} - new value: {2}").format(varray(to_str(position), get_art_light(current_voxel_value), value)));
 }
 
+static void add_affected_block(VoxelLightMap &affected_block, Vector3i block_position, VoxelLightData data) {
+	if (!affected_block.has(block_position)) {
+		affected_block[block_position] = Vector<VoxelLightData>();
+	}
+
+	affected_block[block_position].push_back(data);
+}
+
 bool VoxelLightSpreader::Processor::is_transparent(const VoxelBuffer &buffer, Vector3i position) {
 	CRASH_COND(!library.is_valid());
 
@@ -73,8 +81,8 @@ void VoxelLightSpreader::Processor::process_block(const InputBlockData &input, O
 		//There are four possible queues: add and remove natural and artifical light
 		std::queue<BFSNode> &queue = get_queue(data.type, is_add_light);
 
-		int voxel_light_value = input_buffer.get_voxel(voxel_pos, light_channel);
-		int light_value = (data.type == VoxelLightType::ARTIFICIAL) ? get_art_light(voxel_light_value) : get_nat_light(voxel_light_value);
+		unsigned int voxel_light_value = (unsigned int) input_buffer.get_voxel(voxel_pos, light_channel);
+		unsigned int light_value = (data.type == VoxelLightType::ARTIFICIAL) ? get_art_light(voxel_light_value) : get_nat_light(voxel_light_value);
 
 		//print_line(String("is_add_light: {0} - light_value: {1} - data.new_value: {2}").format(varray(is_add_light, light_value, data.new_value)));
 
@@ -100,11 +108,11 @@ void VoxelLightSpreader::Processor::process_block(const InputBlockData &input, O
 
 	//print_line(String("Add queue: {0} - Remove queue: {1}").format(varray(art_add_queue.size(), art_remove_queue.size())));
 
-	remove_artificial_light(input_buffer, out_buffer);
-	add_artificial_light(input_buffer, out_buffer);
+	remove_artificial_light(input_buffer, out_buffer, block_position, output.affected_blocks);
+	add_artificial_light(input_buffer, out_buffer, block_position, output.affected_blocks);
 }
 
-void VoxelLightSpreader::Processor::add_artificial_light(const VoxelBuffer &input_buffer, VoxelBuffer &buffer) {
+void VoxelLightSpreader::Processor::add_artificial_light(const VoxelBuffer &input_buffer, VoxelBuffer &buffer, Vector3i block_position, VoxelLightMap &affected_blocks) {
 	//print_line(String("Adding art light!"));
 	while (!art_add_queue.empty()) {
 		const BFSNode &node = art_add_queue.front();
@@ -120,13 +128,6 @@ void VoxelLightSpreader::Processor::add_artificial_light(const VoxelBuffer &inpu
 			if (!is_transparent(input_buffer, npos))
 				continue;
 
-			//Can't spread to same voxel or to invalid voxel
-			if (!npos.is_contained_in(min_boundary, max_boundary)) {
-				print_line(String("Out of bounds: {0} - {1}").format(varray(to_str(npos), node.value)));
-				//TODO: Spread to neighbors
-				continue;
-			}
-
 			//Only spread if it's value is greater
 			if (node.value <= get_art_light(buffer.get_voxel(npos, light_channel))) {
 				continue;
@@ -136,13 +137,18 @@ void VoxelLightSpreader::Processor::add_artificial_light(const VoxelBuffer &inpu
 
 			//Only spread to neighbors if the light has enough power left
 			if (node.value > LIGHT_DECREASE_POWER) {
-				art_add_queue.emplace(npos, node.value - LIGHT_DECREASE_POWER);
+				//Check if some neighbor block was affected
+				if (!npos.is_contained_in(min_boundary, max_boundary)) {
+					add_affected_block(affected_blocks, block_position + side, VoxelLightData{ VoxelLightType::ARTIFICIAL, node.value - LIGHT_DECREASE_POWER, npos.wrap(max_boundary - min_boundary) });
+				} else {
+					art_add_queue.emplace(npos, node.value - LIGHT_DECREASE_POWER);
+				}
 			}
 		}
 	}
 }
 
-void VoxelLightSpreader::Processor::remove_artificial_light(const VoxelBuffer &input_buffer, VoxelBuffer &buffer) {
+void VoxelLightSpreader::Processor::remove_artificial_light(const VoxelBuffer &input_buffer, VoxelBuffer &buffer, Vector3i block_position, VoxelLightMap &affected_blocks) {
 	//print_line(String("Removing art light!"));
 	while (!art_remove_queue.empty()) {
 		const BFSNode &node = art_remove_queue.front();
@@ -159,7 +165,7 @@ void VoxelLightSpreader::Processor::remove_artificial_light(const VoxelBuffer &i
 				continue;
 			}
 
-			int neighbor_light = get_art_light(buffer.get_voxel(npos, light_channel));
+			unsigned int neighbor_light = get_art_light(buffer.get_voxel(npos, light_channel));
 
 			if (neighbor_light < LIGHT_DECREASE_POWER) {
 				//print_line(String("Light too low: {0}, {1}, {2} - {3}").format(varray(npos.x, npos.y, npos.z, neighbor_light)));
