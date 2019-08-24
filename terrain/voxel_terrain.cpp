@@ -35,6 +35,9 @@ VoxelTerrain::~VoxelTerrain() {
 	if (_block_updater) {
 		memdelete(_block_updater);
 	}
+	if (_light_spreader) {
+		memdelete(_light_spreader);
+	}
 }
 
 // TODO See if there is a way to specify materials in voxels directly?
